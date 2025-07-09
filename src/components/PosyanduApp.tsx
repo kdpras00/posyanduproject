@@ -53,6 +53,8 @@ interface User {
 const SchedulePage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [selectedScheduleId, setSelectedScheduleId] = useState<number | null>(null);
   const [newSchedule, setNewSchedule] = useState({
     date: '',
     time: '',
@@ -70,7 +72,7 @@ const SchedulePage = () => {
   };
 
   const handleSubmit = () => {
-    console.log('Menyimpan jadwal posyandu baru:', newSchedule);
+    console.log(editMode ? 'Memperbarui jadwal posyandu:' : 'Menyimpan jadwal posyandu baru:', newSchedule);
     setNewSchedule({
       date: '',
       time: '',
@@ -79,6 +81,28 @@ const SchedulePage = () => {
       activities: ''
     });
     setShowAddForm(false);
+    setEditMode(false);
+    setSelectedScheduleId(null);
+  };
+  
+  const handleEdit = (schedule: any) => {
+    setEditMode(true);
+    setSelectedScheduleId(schedule.id);
+    
+    // Convert activities array to string for form
+    const activitiesStr = Array.isArray(schedule.activities) 
+      ? schedule.activities.join(', ')
+      : schedule.activities;
+      
+    setNewSchedule({
+      date: schedule.date,
+      time: schedule.time,
+      location: schedule.location,
+      description: schedule.description,
+      activities: activitiesStr
+    });
+    
+    setShowAddForm(true);
   };
   
   const schedules = [
@@ -135,7 +159,20 @@ const SchedulePage = () => {
             Kelola jadwal kegiatan posyandu
           </p>
         </div>
-        <Dialog open={showAddForm} onOpenChange={setShowAddForm}>
+        <Dialog open={showAddForm} onOpenChange={(open) => {
+          setShowAddForm(open);
+          if (!open) {
+            setEditMode(false);
+            setSelectedScheduleId(null);
+            setNewSchedule({
+              date: '',
+              time: '',
+              location: '',
+              description: '',
+              activities: ''
+            });
+          }
+        }}>
           <DialogTrigger asChild>
             <Button className="bg-gradient-primary hover:shadow-button">
               <Plus className="h-4 w-4 mr-2" />
@@ -144,9 +181,9 @@ const SchedulePage = () => {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
-              <DialogTitle>Tambah Jadwal Posyandu</DialogTitle>
+              <DialogTitle>{editMode ? 'Edit Jadwal Posyandu' : 'Tambah Jadwal Posyandu'}</DialogTitle>
               <DialogDescription>
-                Buat jadwal kegiatan posyandu baru
+                {editMode ? 'Edit jadwal kegiatan posyandu' : 'Buat jadwal kegiatan posyandu baru'}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -212,8 +249,19 @@ const SchedulePage = () => {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowAddForm(false)}>Batal</Button>
-              <Button onClick={handleSubmit}>Simpan</Button>
+              <Button variant="outline" onClick={() => {
+                setShowAddForm(false);
+                setEditMode(false);
+                setSelectedScheduleId(null);
+                setNewSchedule({
+                  date: '',
+                  time: '',
+                  location: '',
+                  description: '',
+                  activities: ''
+                });
+              }}>Batal</Button>
+              <Button onClick={handleSubmit}>{editMode ? 'Simpan Perubahan' : 'Simpan'}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -347,7 +395,11 @@ const SchedulePage = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleEdit(schedule)}
+                        >
                           Edit
                         </Button>
                       </div>
@@ -368,6 +420,14 @@ export const PosyanduApp = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeView, setActiveView] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showRegistrationForm, setShowRegistrationForm] = useState(false);
+  const [registrationData, setRegistrationData] = useState({
+    name: '',
+    username: '',
+    password: '',
+    confirmPassword: '',
+    role: 'Kader'
+  });
 
   const handleLogin = (username: string, password: string) => {
     // Simple authentication logic - in real app, this would be handled by backend
@@ -387,6 +447,33 @@ export const PosyanduApp = () => {
       });
       setIsAuthenticated(true);
     }
+  };
+
+  const handleRegister = (data: typeof registrationData) => {
+    // Validasi data registrasi
+    if (data.password !== data.confirmPassword) {
+      alert('Password dan konfirmasi password tidak sama');
+      return;
+    }
+    
+    if (!data.name || !data.username || !data.password) {
+      alert('Semua data harus diisi');
+      return;
+    }
+    
+    // Simpan data registrasi (dalam aplikasi nyata akan dikirim ke server)
+    console.log('Data registrasi berhasil disimpan:', data);
+    alert('Registrasi berhasil! Silakan login dengan akun baru Anda.');
+    setShowRegistrationForm(false);
+    
+    // Reset form data
+    setRegistrationData({
+      name: '',
+      username: '',
+      password: '',
+      confirmPassword: '',
+      role: 'Kader'
+    });
   };
 
   const handleLogout = () => {
@@ -427,7 +514,102 @@ export const PosyanduApp = () => {
   };
 
   if (!isAuthenticated) {
-    return <LoginPage onLogin={handleLogin} />;
+    if (showRegistrationForm) {
+      return (
+        <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md mx-auto shadow-card">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl font-bold text-foreground">
+                Registrasi Pengguna Baru
+              </CardTitle>
+              <CardDescription>
+                Silakan isi data untuk membuat akun baru
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form className="space-y-4" onSubmit={(e) => {
+                e.preventDefault();
+                handleRegister(registrationData);
+              }}>
+                <div className="space-y-2">
+                  <Label htmlFor="reg-name">Nama Lengkap</Label>
+                  <Input
+                    id="reg-name"
+                    value={registrationData.name}
+                    onChange={(e) => setRegistrationData({...registrationData, name: e.target.value})}
+                    placeholder="Masukkan nama lengkap"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="reg-username">Username</Label>
+                  <Input
+                    id="reg-username"
+                    value={registrationData.username}
+                    onChange={(e) => setRegistrationData({...registrationData, username: e.target.value})}
+                    placeholder="Masukkan username"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="reg-password">Password</Label>
+                  <Input
+                    id="reg-password"
+                    type="password"
+                    value={registrationData.password}
+                    onChange={(e) => setRegistrationData({...registrationData, password: e.target.value})}
+                    placeholder="Masukkan password"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="reg-confirm-password">Konfirmasi Password</Label>
+                  <Input
+                    id="reg-confirm-password"
+                    type="password"
+                    value={registrationData.confirmPassword}
+                    onChange={(e) => setRegistrationData({...registrationData, confirmPassword: e.target.value})}
+                    placeholder="Konfirmasi password"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="reg-role">Peran</Label>
+                  <Select 
+                    value={registrationData.role} 
+                    onValueChange={(value) => setRegistrationData({...registrationData, role: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih peran" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Kader">Kader</SelectItem>
+                      <SelectItem value="Wali">Wali Balita</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex gap-2 pt-4">
+                  <Button type="submit" className="flex-1">
+                    Daftar
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => setShowRegistrationForm(false)}>
+                    Kembali ke Login
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+    
+    return (
+      <LoginPage 
+        onLogin={handleLogin} 
+        onRegisterClick={() => setShowRegistrationForm(true)}
+      />
+    );
   }
 
   return (

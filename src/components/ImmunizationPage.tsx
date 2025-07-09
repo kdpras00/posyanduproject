@@ -21,10 +21,27 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+interface ImmunizationRecord {
+  id: number;
+  childName: string;
+  vaccine: string;
+  scheduledDate: string;
+  status: 'Completed' | 'Scheduled' | 'Pending';
+  age: string;
+  notes: string;
+  givenDate?: string;
+  givenBy?: string;
+  batchNumber?: string;
+  reaction?: string;
+  nextSchedule?: string;
+}
+
 export const ImmunizationPage = () => {
   const [date, setDate] = useState<Date>();
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<ImmunizationRecord | null>(null);
   const [newSchedule, setNewSchedule] = useState({
     childName: '',
     vaccine: '',
@@ -57,8 +74,13 @@ export const ImmunizationPage = () => {
     });
     setShowAddForm(false);
   };
+  
+  const handleViewDetails = (record: ImmunizationRecord) => {
+    setSelectedRecord(record);
+    setShowDetails(true);
+  };
 
-  const immunizationSchedule = [
+  const immunizationSchedule: ImmunizationRecord[] = [
     {
       id: 1,
       childName: 'Ahmad Rizki',
@@ -66,7 +88,8 @@ export const ImmunizationPage = () => {
       scheduledDate: '2024-02-15',
       status: 'Scheduled',
       age: '2 bulan',
-      notes: 'Imunisasi dasar'
+      notes: 'Imunisasi dasar',
+      nextSchedule: '2024-03-15'
     },
     {
       id: 2,
@@ -75,7 +98,12 @@ export const ImmunizationPage = () => {
       scheduledDate: '2024-02-10',
       status: 'Completed',
       age: '4 bulan',
-      notes: 'Sudah selesai'
+      notes: 'Sudah selesai',
+      givenDate: '2024-02-10',
+      givenBy: 'Dr. Budi',
+      batchNumber: 'VAC2024-021',
+      reaction: 'Tidak ada',
+      nextSchedule: '2024-03-10'
     },
     {
       id: 3,
@@ -84,7 +112,8 @@ export const ImmunizationPage = () => {
       scheduledDate: '2024-02-20',
       status: 'Pending',
       age: '9 bulan',
-      notes: 'Menunggu persetujuan orang tua'
+      notes: 'Menunggu persetujuan orang tua',
+      nextSchedule: '2024-02-27'
     }
   ];
 
@@ -96,6 +125,15 @@ export const ImmunizationPage = () => {
     { name: 'Rotavirus', description: 'Diare rotavirus', schedule: '2, 4 bulan' },
     { name: 'Campak', description: 'Campak', schedule: '9, 18 bulan' }
   ];
+  
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('id-ID', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -286,7 +324,11 @@ export const ImmunizationPage = () => {
                     >
                       {item.status}
                     </Badge>
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleViewDetails(item)}
+                    >
                       Detail
                     </Button>
                   </div>
@@ -296,6 +338,118 @@ export const ImmunizationPage = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Immunization Details Dialog */}
+      <Dialog open={showDetails} onOpenChange={setShowDetails}>
+        <DialogContent className="sm:max-w-[550px]">
+          <DialogHeader>
+            <DialogTitle>Detail Imunisasi</DialogTitle>
+            <DialogDescription>
+              Informasi lengkap jadwal imunisasi
+            </DialogDescription>
+          </DialogHeader>
+          {selectedRecord && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-semibold text-foreground mb-2">Informasi Balita</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Nama:</span>
+                      <span className="font-medium">{selectedRecord.childName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Usia:</span>
+                      <span className="font-medium">{selectedRecord.age}</span>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground mb-2">Informasi Vaksin</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Jenis:</span>
+                      <span className="font-medium">{selectedRecord.vaccine}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Status:</span>
+                      <Badge 
+                        variant={
+                          selectedRecord.status === 'Completed' ? 'default' : 
+                          selectedRecord.status === 'Scheduled' ? 'secondary' : 
+                          'destructive'
+                        }
+                      >
+                        {selectedRecord.status}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="font-semibold text-foreground mb-2">Jadwal</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Tanggal Terjadwal:</span>
+                    <span className="font-medium">{formatDate(selectedRecord.scheduledDate)}</span>
+                  </div>
+                  {selectedRecord.givenDate && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Tanggal Pemberian:</span>
+                      <span className="font-medium">{formatDate(selectedRecord.givenDate)}</span>
+                    </div>
+                  )}
+                  {selectedRecord.nextSchedule && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Jadwal Berikutnya:</span>
+                      <span className="font-medium">{formatDate(selectedRecord.nextSchedule)}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {selectedRecord.status === 'Completed' && (
+                <div>
+                  <h4 className="font-semibold text-foreground mb-2">Detail Pemberian</h4>
+                  <div className="space-y-2">
+                    {selectedRecord.givenBy && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Pemberi:</span>
+                        <span className="font-medium">{selectedRecord.givenBy}</span>
+                      </div>
+                    )}
+                    {selectedRecord.batchNumber && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">No. Batch:</span>
+                        <span className="font-medium">{selectedRecord.batchNumber}</span>
+                      </div>
+                    )}
+                    {selectedRecord.reaction && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Reaksi:</span>
+                        <span className="font-medium">{selectedRecord.reaction}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              <div>
+                <h4 className="font-semibold text-foreground mb-2">Catatan</h4>
+                <p className="text-sm border p-2 rounded-md">{selectedRecord.notes || "Tidak ada catatan"}</p>
+              </div>
+              
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setShowDetails(false)}>Tutup</Button>
+                {selectedRecord.status !== 'Completed' && (
+                  <Button>Tandai Selesai</Button>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Vaccine Types */}
       <Card>

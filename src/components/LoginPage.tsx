@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Eye, EyeOff, Heart, Shield, Users, Activity } from 'lucide-react';
+import { Eye, EyeOff, Heart, Shield, Users, Activity, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,9 +8,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface LoginPageProps {
   onLogin: (username: string, password: string) => void;
+  onRegisterClick?: () => void;
 }
 
-export const LoginPage = ({ onLogin }: LoginPageProps) => {
+export const LoginPage = ({ onLogin, onRegisterClick }: LoginPageProps) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -165,6 +166,18 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
                 >
                   {isLoading ? 'Memproses...' : 'Masuk'}
                 </Button>
+                
+                {onRegisterClick && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full mt-2"
+                    onClick={onRegisterClick}
+                  >
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Registrasi Pengguna Baru
+                  </Button>
+                )}
               </form>
               
               <div className="mt-6 text-center text-sm text-muted-foreground">

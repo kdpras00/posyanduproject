@@ -24,6 +24,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 interface CheckupRecord {
   id: number;
@@ -42,6 +43,8 @@ export const MedicalCheckupPage = () => {
   const [selectedChild, setSelectedChild] = useState('');
   const [selectedType, setSelectedType] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [selectedRecordId, setSelectedRecordId] = useState<number | null>(null);
   const [newCheckup, setNewCheckup] = useState({
     childName: '',
     date: '',
@@ -70,7 +73,7 @@ export const MedicalCheckupPage = () => {
   };
 
   const handleSubmit = () => {
-    console.log('Menyimpan data pemeriksaan baru:', newCheckup);
+    console.log(editMode ? 'Memperbarui data pemeriksaan:' : 'Menyimpan data pemeriksaan baru:', newCheckup);
     setNewCheckup({
       childName: '',
       date: '',
@@ -83,6 +86,34 @@ export const MedicalCheckupPage = () => {
       notes: ''
     });
     setShowAddForm(false);
+    setEditMode(false);
+    setSelectedRecordId(null);
+  };
+
+  const handleEdit = (record: CheckupRecord) => {
+    setEditMode(true);
+    setSelectedRecordId(record.id);
+    setNewCheckup({
+      childName: record.childName,
+      date: record.date,
+      type: record.type,
+      symptoms: record.symptoms || '',
+      diagnosis: record.diagnosis || '',
+      treatment: record.treatment || '',
+      followUp: record.followUp || '',
+      referral: '',
+      notes: record.notes || ''
+    });
+    setShowAddForm(true);
+  };
+
+  const handleDelete = (recordId: number) => {
+    console.log('Menghapus data pemeriksaan dengan ID:', recordId);
+    // Logika untuk menghapus data pemeriksaan
+    // Dalam aplikasi nyata, ini akan memanggil API untuk menghapus data dari database
+    
+    // Simulasi penghapusan dengan memperbarui UI
+    alert(`Data pemeriksaan dengan ID ${recordId} berhasil dihapus`);
   };
 
   const checkupRecords: CheckupRecord[] = [
@@ -236,7 +267,24 @@ export const MedicalCheckupPage = () => {
             }}>
               Reset
             </Button>
-            <Dialog open={showAddForm} onOpenChange={setShowAddForm}>
+            <Dialog open={showAddForm} onOpenChange={(open) => {
+              setShowAddForm(open);
+              if (!open) {
+                setEditMode(false);
+                setSelectedRecordId(null);
+                setNewCheckup({
+                  childName: '',
+                  date: '',
+                  type: '',
+                  symptoms: '',
+                  diagnosis: '',
+                  treatment: '',
+                  followUp: '',
+                  referral: '',
+                  notes: ''
+                });
+              }
+            }}>
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
@@ -245,9 +293,9 @@ export const MedicalCheckupPage = () => {
               </DialogTrigger>
               <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
-                  <DialogTitle>Tambah Data Pemeriksaan</DialogTitle>
+                  <DialogTitle>{editMode ? 'Edit Data Pemeriksaan' : 'Tambah Data Pemeriksaan'}</DialogTitle>
                   <DialogDescription>
-                    Catat data pemeriksaan kesehatan balita baru
+                    {editMode ? 'Edit data pemeriksaan kesehatan balita' : 'Catat data pemeriksaan kesehatan balita baru'}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
@@ -379,8 +427,12 @@ export const MedicalCheckupPage = () => {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setShowAddForm(false)}>Batal</Button>
-                  <Button onClick={handleSubmit}>Simpan</Button>
+                  <Button variant="outline" onClick={() => {
+                    setShowAddForm(false);
+                    setEditMode(false);
+                    setSelectedRecordId(null);
+                  }}>Batal</Button>
+                  <Button onClick={handleSubmit}>{editMode ? 'Simpan Perubahan' : 'Simpan'}</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -433,12 +485,32 @@ export const MedicalCheckupPage = () => {
                     <TableCell>{record.followUp || '-'}</TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEdit(record)}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Konfirmasi Hapus</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Apakah Anda yakin ingin menghapus data pemeriksaan ini? Tindakan ini tidak dapat dibatalkan.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Batal</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(record.id)}>Hapus</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </TableCell>
                   </TableRow>

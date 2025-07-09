@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useNavigate } from 'react-router-dom';
 
 interface Child {
@@ -41,6 +42,7 @@ export const ChildrenManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedChild, setSelectedChild] = useState<Child | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [newChild, setNewChild] = useState({
     name: '',
     birthDate: '',
@@ -67,7 +69,7 @@ export const ChildrenManagement = () => {
   
   const handleSubmit = () => {
     // Logika untuk menyimpan balita baru
-    console.log('Menyimpan balita baru:', newChild);
+    console.log(editMode ? 'Memperbarui data balita:' : 'Menyimpan balita baru:', newChild);
     // Reset form dan tutup dialog
     setNewChild({
       name: '',
@@ -78,6 +80,29 @@ export const ChildrenManagement = () => {
       address: ''
     });
     setShowAddForm(false);
+    setEditMode(false);
+  };
+
+  const handleEdit = (child: Child) => {
+    setEditMode(true);
+    setNewChild({
+      name: child.name,
+      birthDate: child.birthDate,
+      gender: child.gender,
+      motherName: child.motherName,
+      fatherName: child.fatherName,
+      address: child.address
+    });
+    setShowAddForm(true);
+  };
+
+  const handleDelete = (childId: number) => {
+    console.log('Menghapus data balita dengan ID:', childId);
+    // Logika untuk menghapus data balita
+    // Dalam aplikasi nyata, ini akan memanggil API untuk menghapus data dari database
+    
+    // Simulasi penghapusan dengan memperbarui UI
+    alert(`Data balita dengan ID ${childId} berhasil dihapus`);
   };
 
   const children: Child[] = [
@@ -156,9 +181,9 @@ export const ChildrenManagement = () => {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
-              <DialogTitle>Registrasi Balita Baru</DialogTitle>
+              <DialogTitle>{editMode ? 'Edit Data Balita' : 'Registrasi Balita Baru'}</DialogTitle>
               <DialogDescription>
-                Silakan isi data balita baru berikut ini
+                {editMode ? 'Edit informasi balita' : 'Silakan isi data balita baru berikut ini'}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -238,8 +263,19 @@ export const ChildrenManagement = () => {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowAddForm(false)}>Batal</Button>
-              <Button onClick={handleSubmit}>Simpan</Button>
+              <Button variant="outline" onClick={() => {
+                setShowAddForm(false);
+                setEditMode(false);
+                setNewChild({
+                  name: '',
+                  birthDate: '',
+                  gender: '',
+                  motherName: '',
+                  fatherName: '',
+                  address: ''
+                });
+              }}>Batal</Button>
+              <Button onClick={handleSubmit}>{editMode ? 'Simpan Perubahan' : 'Simpan'}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -321,12 +357,32 @@ export const ChildrenManagement = () => {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEdit(child)}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Konfirmasi Hapus</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Apakah Anda yakin ingin menghapus data balita ini? Tindakan ini tidak dapat dibatalkan.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Batal</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(child.id)}>Hapus</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -397,8 +453,9 @@ export const ChildrenManagement = () => {
               </div>
             </div>
             
-            <div className="mt-6 flex justify-end">
+            <div className="mt-6 flex justify-end space-x-2">
               <Button variant="outline" onClick={() => setSelectedChild(null)}>Tutup</Button>
+              <Button onClick={() => handleEdit(selectedChild)}>Edit Data</Button>
             </div>
           </CardContent>
         </Card>

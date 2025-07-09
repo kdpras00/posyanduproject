@@ -38,6 +38,8 @@ export const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showUserForm, setShowUserForm] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [showUserDetails, setShowUserDetails] = useState(false);
   const [newUser, setNewUser] = useState({
     name: '',
     username: '',
@@ -89,7 +91,7 @@ export const UserManagement = () => {
 
   const handleSubmit = () => {
     // Logika untuk menyimpan pengguna baru
-    console.log('Menyimpan pengguna baru:', newUser);
+    console.log(editMode ? 'Memperbarui pengguna:' : 'Menyimpan pengguna baru:', newUser);
     // Reset form dan tutup dialog
     setNewUser({
       name: '',
@@ -98,6 +100,32 @@ export const UserManagement = () => {
       role: ''
     });
     setShowUserForm(false);
+    setEditMode(false);
+  };
+
+  const handleEdit = (user: User) => {
+    setEditMode(true);
+    setNewUser({
+      name: user.name,
+      username: user.username,
+      password: '',  // Password tidak ditampilkan untuk keamanan
+      role: user.role
+    });
+    setShowUserForm(true);
+  };
+
+  const handleDelete = (userId: number) => {
+    console.log('Menghapus pengguna dengan ID:', userId);
+    // Logika untuk menghapus pengguna
+    // Dalam aplikasi nyata, ini akan memanggil API untuk menghapus data dari database
+    
+    // Simulasi penghapusan dengan memperbarui UI
+    alert(`Pengguna dengan ID ${userId} berhasil dihapus`);
+  };
+  
+  const handleViewDetails = (user: User) => {
+    setSelectedUser(user);
+    setShowUserDetails(true);
   };
 
   const filteredUsers = users.filter(user =>
@@ -124,9 +152,9 @@ export const UserManagement = () => {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Tambah Pengguna Baru</DialogTitle>
+              <DialogTitle>{editMode ? 'Edit Pengguna' : 'Tambah Pengguna Baru'}</DialogTitle>
               <DialogDescription>
-                Silakan isi data pengguna baru berikut ini
+                {editMode ? 'Edit data pengguna' : 'Silakan isi data pengguna baru berikut ini'}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -152,6 +180,7 @@ export const UserManagement = () => {
                   className="col-span-3"
                   value={newUser.username}
                   onChange={handleInputChange}
+                  disabled={editMode}
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
@@ -161,7 +190,7 @@ export const UserManagement = () => {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Password"
+                  placeholder={editMode ? "Kosongkan jika tidak ingin mengubah" : "Password"}
                   className="col-span-3"
                   value={newUser.password}
                   onChange={handleInputChange}
@@ -184,8 +213,17 @@ export const UserManagement = () => {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowUserForm(false)}>Batal</Button>
-              <Button onClick={handleSubmit}>Simpan</Button>
+              <Button variant="outline" onClick={() => {
+                setShowUserForm(false);
+                setEditMode(false);
+                setNewUser({
+                  name: '',
+                  username: '',
+                  password: '',
+                  role: ''
+                });
+              }}>Batal</Button>
+              <Button onClick={handleSubmit}>{editMode ? 'Simpan Perubahan' : 'Simpan'}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -259,11 +297,15 @@ export const UserManagement = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setSelectedUser(user)}
+                          onClick={() => handleViewDetails(user)}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEdit(user)}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <AlertDialog>
@@ -281,7 +323,7 @@ export const UserManagement = () => {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Batal</AlertDialogCancel>
-                              <AlertDialogAction>Hapus</AlertDialogAction>
+                              <AlertDialogAction onClick={() => handleDelete(user.id)}>Hapus</AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
@@ -294,6 +336,53 @@ export const UserManagement = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* User Details Dialog */}
+      <Dialog open={showUserDetails} onOpenChange={setShowUserDetails}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Detail Pengguna</DialogTitle>
+            <DialogDescription>
+              Informasi detail pengguna
+            </DialogDescription>
+          </DialogHeader>
+          {selectedUser && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-2">
+                <p className="font-medium text-muted-foreground">Nama Lengkap:</p>
+                <p className="col-span-2">{selectedUser.name}</p>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <p className="font-medium text-muted-foreground">Username:</p>
+                <p className="col-span-2">{selectedUser.username}</p>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <p className="font-medium text-muted-foreground">Peran:</p>
+                <p className="col-span-2">
+                  <Badge variant={selectedUser.role === 'Administrator' ? 'secondary' : 'default'}>
+                    {selectedUser.role}
+                  </Badge>
+                </p>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <p className="font-medium text-muted-foreground">Status:</p>
+                <p className="col-span-2">
+                  <Badge variant={selectedUser.status === 'Aktif' ? 'default' : 'secondary'}>
+                    {selectedUser.status}
+                  </Badge>
+                </p>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <p className="font-medium text-muted-foreground">Login Terakhir:</p>
+                <p className="col-span-2">{selectedUser.lastLogin}</p>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={() => setShowUserDetails(false)}>Tutup</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
