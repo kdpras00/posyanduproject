@@ -11,7 +11,7 @@ import { MedicalCheckupPage } from './MedicalCheckupPage';
 import { ChildHistoryPage } from './ChildHistoryPage';
 import { ReportsPage } from './ReportsPage';
 import { BackupPage } from './BackupPage';
-import { Search, Plus, Calendar, Clock, MapPin, Users, CheckCircle } from 'lucide-react';
+import { Search, Plus, Calendar, Clock, MapPin, Users, CheckCircle, LineChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -62,6 +62,13 @@ const SchedulePage = () => {
     description: '',
     activities: ''
   });
+  
+  // State untuk fitur perkembangan anak
+  const [showChildDevelopment, setShowChildDevelopment] = useState(false);
+  const [selectedChild, setSelectedChild] = useState<string | null>(null);
+  const [developmentData, setDevelopmentData] = useState<any>(null);
+  const [searchChildTerm, setSearchChildTerm] = useState('');
+  const [dataFound, setDataFound] = useState(true);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
@@ -105,6 +112,39 @@ const SchedulePage = () => {
     setShowAddForm(true);
   };
   
+  // Handle untuk fitur perkembangan anak
+  const handleShowChildDevelopment = () => {
+    setShowChildDevelopment(true);
+  };
+  
+  const handleSelectChild = (childName: string) => {
+    setSelectedChild(childName);
+    // Simulasi pengambilan data perkembangan anak
+    const childData = children.find(c => c.name === childName);
+    
+    if (childData) {
+      setDevelopmentData({
+        name: childData.name,
+        age: childData.age,
+        weight: childData.weight,
+        height: childData.height,
+        headCircumference: childData.headCircumference,
+        developmentStatus: childData.developmentStatus,
+        nutritionStatus: childData.nutritionStatus,
+        lastUpdated: childData.lastUpdated
+      });
+      setDataFound(true);
+    } else {
+      setDataFound(false);
+    }
+  };
+  
+  const handleSaveChildData = () => {
+    // Simulasi penyimpanan data perkembangan anak
+    console.log("Menyimpan data perkembangan anak:", developmentData);
+    alert("Data berhasil disimpan");
+  };
+  
   const schedules = [
     {
       id: 1,
@@ -134,10 +174,51 @@ const SchedulePage = () => {
       status: 'Upcoming'
     }
   ];
+  
+  // Data sampel untuk perkembangan anak
+  const children = [
+    {
+      id: 1,
+      name: 'Ahmad Rizki',
+      age: '24 bulan',
+      weight: '12.5 kg',
+      height: '86 cm',
+      headCircumference: '49 cm',
+      developmentStatus: 'Sesuai usia',
+      nutritionStatus: 'Baik',
+      lastUpdated: '2024-01-15'
+    },
+    {
+      id: 2,
+      name: 'Siti Aminah',
+      age: '18 bulan',
+      weight: '10.2 kg',
+      height: '79 cm',
+      headCircumference: '47 cm',
+      developmentStatus: 'Sesuai usia',
+      nutritionStatus: 'Baik',
+      lastUpdated: '2024-01-20'
+    },
+    {
+      id: 3,
+      name: 'Budi Santoso',
+      age: '36 bulan',
+      weight: '14.8 kg',
+      height: '94 cm',
+      headCircumference: '51 cm',
+      developmentStatus: 'Sesuai usia',
+      nutritionStatus: 'Baik',
+      lastUpdated: '2024-01-10'
+    }
+  ];
 
   const filteredSchedules = schedules.filter(schedule =>
     schedule.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     schedule.location.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  const filteredChildren = children.filter(child =>
+    child.name.toLowerCase().includes(searchChildTerm.toLowerCase())
   );
 
   const formatDate = (dateString: string) => {
@@ -159,112 +240,122 @@ const SchedulePage = () => {
             Kelola jadwal kegiatan posyandu
           </p>
         </div>
-        <Dialog open={showAddForm} onOpenChange={(open) => {
-          setShowAddForm(open);
-          if (!open) {
-            setEditMode(false);
-            setSelectedScheduleId(null);
-            setNewSchedule({
-              date: '',
-              time: '',
-              location: '',
-              description: '',
-              activities: ''
-            });
-          }
-        }}>
-          <DialogTrigger asChild>
-            <Button className="bg-gradient-primary hover:shadow-button">
-              <Plus className="h-4 w-4 mr-2" />
-              Tambah Jadwal
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>{editMode ? 'Edit Jadwal Posyandu' : 'Tambah Jadwal Posyandu'}</DialogTitle>
-              <DialogDescription>
-                {editMode ? 'Edit jadwal kegiatan posyandu' : 'Buat jadwal kegiatan posyandu baru'}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="date" className="text-right">
-                  Tanggal
-                </Label>
-                <Input
-                  id="date"
-                  type="date"
-                  className="col-span-3"
-                  value={newSchedule.date}
-                  onChange={handleInputChange}
-                />
+        <div className="flex gap-2">
+          <Dialog open={showAddForm} onOpenChange={(open) => {
+            setShowAddForm(open);
+            if (!open) {
+              setEditMode(false);
+              setSelectedScheduleId(null);
+              setNewSchedule({
+                date: '',
+                time: '',
+                location: '',
+                description: '',
+                activities: ''
+              });
+            }
+          }}>
+            <DialogTrigger asChild>
+              <Button className="bg-gradient-primary hover:shadow-button">
+                <Plus className="h-4 w-4 mr-2" />
+                Tambah Jadwal
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>{editMode ? 'Edit Jadwal Posyandu' : 'Tambah Jadwal Posyandu'}</DialogTitle>
+                <DialogDescription>
+                  {editMode ? 'Edit jadwal kegiatan posyandu' : 'Buat jadwal kegiatan posyandu baru'}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="date" className="text-right">
+                    Tanggal
+                  </Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    className="col-span-3"
+                    value={newSchedule.date}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="time" className="text-right">
+                    Waktu
+                  </Label>
+                  <Input
+                    id="time"
+                    placeholder="08:00 - 12:00"
+                    className="col-span-3"
+                    value={newSchedule.time}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="location" className="text-right">
+                    Lokasi
+                  </Label>
+                  <Input
+                    id="location"
+                    placeholder="Balai Desa Sukamaju"
+                    className="col-span-3"
+                    value={newSchedule.location}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="description" className="text-right">
+                    Deskripsi
+                  </Label>
+                  <Input
+                    id="description"
+                    placeholder="Posyandu Rutin Bulanan"
+                    className="col-span-3"
+                    value={newSchedule.description}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="activities" className="text-right">
+                    Kegiatan
+                  </Label>
+                  <Textarea
+                    id="activities"
+                    placeholder="Pemeriksaan Balita, Imunisasi, dll (pisahkan dengan koma)"
+                    className="col-span-3"
+                    value={newSchedule.activities}
+                    onChange={handleInputChange}
+                  />
+                </div>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="time" className="text-right">
-                  Waktu
-                </Label>
-                <Input
-                  id="time"
-                  placeholder="08:00 - 12:00"
-                  className="col-span-3"
-                  value={newSchedule.time}
-                  onChange={handleInputChange}
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="location" className="text-right">
-                  Lokasi
-                </Label>
-                <Input
-                  id="location"
-                  placeholder="Balai Desa Sukamaju"
-                  className="col-span-3"
-                  value={newSchedule.location}
-                  onChange={handleInputChange}
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="description" className="text-right">
-                  Deskripsi
-                </Label>
-                <Input
-                  id="description"
-                  placeholder="Posyandu Rutin Bulanan"
-                  className="col-span-3"
-                  value={newSchedule.description}
-                  onChange={handleInputChange}
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="activities" className="text-right">
-                  Kegiatan
-                </Label>
-                <Textarea
-                  id="activities"
-                  placeholder="Pemeriksaan Balita, Imunisasi, dll (pisahkan dengan koma)"
-                  className="col-span-3"
-                  value={newSchedule.activities}
-                  onChange={handleInputChange}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => {
-                setShowAddForm(false);
-                setEditMode(false);
-                setSelectedScheduleId(null);
-                setNewSchedule({
-                  date: '',
-                  time: '',
-                  location: '',
-                  description: '',
-                  activities: ''
-                });
-              }}>Batal</Button>
-              <Button onClick={handleSubmit}>{editMode ? 'Simpan Perubahan' : 'Simpan'}</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => {
+                  setShowAddForm(false);
+                  setEditMode(false);
+                  setSelectedScheduleId(null);
+                  setNewSchedule({
+                    date: '',
+                    time: '',
+                    location: '',
+                    description: '',
+                    activities: ''
+                  });
+                }}>Batal</Button>
+                <Button onClick={handleSubmit}>{editMode ? 'Simpan Perubahan' : 'Simpan'}</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          
+          <Button 
+            className="bg-green-600 hover:bg-green-700 text-white hover:shadow-button"
+            onClick={handleShowChildDevelopment}
+          >
+            <LineChart className="h-4 w-4 mr-2" />
+            Lihat Perkembangan Anak
+          </Button>
+        </div>
       </div>
 
       {/* Quick Stats */}
@@ -315,102 +406,225 @@ const SchedulePage = () => {
         </Card>
       </div>
 
-      {/* Search */}
-      <Card className="shadow-card">
-        <CardHeader>
-          <CardTitle className="text-foreground">Cari Jadwal</CardTitle>
-          <CardDescription>
-            Cari jadwal posyandu berdasarkan deskripsi atau lokasi
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center space-x-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Cari deskripsi atau lokasi..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Button variant="outline">
-              Filter
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Schedule Table */}
-      <Card className="shadow-card">
-        <CardHeader>
-          <CardTitle className="text-foreground">Daftar Jadwal Posyandu</CardTitle>
-          <CardDescription>
-            Total {filteredSchedules.length} jadwal
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tanggal</TableHead>
-                  <TableHead>Waktu</TableHead>
-                  <TableHead>Lokasi</TableHead>
-                  <TableHead>Deskripsi</TableHead>
-                  <TableHead>Kegiatan</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredSchedules.map((schedule) => (
-                  <TableRow key={schedule.id}>
-                    <TableCell className="font-medium">{formatDate(schedule.date)}</TableCell>
-                    <TableCell>{schedule.time}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center">
-                        <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-                        {schedule.location}
-                      </div>
-                    </TableCell>
-                    <TableCell>{schedule.description}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {schedule.activities.map((activity, idx) => (
-                          <Badge key={idx} variant="outline" className="text-xs">
-                            {activity}
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          schedule.status === 'Completed' ? 'default' : 'secondary'
-                        }
+      {/* Modal Perkembangan Anak */}
+      {showChildDevelopment && (
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle className="text-foreground">Perkembangan Anak</CardTitle>
+            <CardDescription>
+              Lihat data perkembangan anak
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {/* Pencarian */}
+              <div className="flex items-center space-x-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Cari nama anak..."
+                    value={searchChildTerm}
+                    onChange={(e) => setSearchChildTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Button variant="outline" onClick={() => setSearchChildTerm('')}>
+                  Reset
+                </Button>
+              </div>
+              
+              {/* Daftar Anak */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Pilih Data Anak</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredChildren.map(child => (
+                      <Card 
+                        key={child.id}
+                        className={`cursor-pointer hover:bg-muted/50 transition-colors ${selectedChild === child.name ? 'border-primary' : ''}`}
+                        onClick={() => handleSelectChild(child.name)}
                       >
-                        {schedule.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleEdit(schedule)}
-                        >
-                          Edit
-                        </Button>
+                        <CardContent className="p-4">
+                          <div className="font-medium">{child.name}</div>
+                          <div className="text-sm text-muted-foreground">Usia: {child.age}</div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Data Perkembangan Anak */}
+              {selectedChild && developmentData && dataFound ? (
+                <>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Data Perkembangan: {developmentData.name}</CardTitle>
+                      <CardDescription>
+                        Terakhir diperbarui: {developmentData.lastUpdated}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <h4 className="text-sm font-medium mb-2">Informasi Dasar</h4>
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">Usia:</span>
+                              <span>{developmentData.age}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">Berat:</span>
+                              <span>{developmentData.weight}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">Tinggi:</span>
+                              <span>{developmentData.height}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">Lingkar Kepala:</span>
+                              <span>{developmentData.headCircumference}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-medium mb-2">Status Perkembangan</h4>
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">Status Perkembangan:</span>
+                              <Badge>{developmentData.developmentStatus}</Badge>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">Status Gizi:</span>
+                              <Badge variant="outline">{developmentData.nutritionStatus}</Badge>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                    </CardContent>
+                  </Card>
+                  
+                  <div className="flex justify-end">
+                    <Button onClick={handleSaveChildData}>Simpan</Button>
+                  </div>
+                </>
+              ) : selectedChild && !dataFound ? (
+                <div className="text-center p-8">
+                  <div className="text-lg font-medium text-muted-foreground mb-2">Data Balita Tidak Ditemukan</div>
+                  <p className="text-sm text-muted-foreground">Silakan pilih balita lain atau periksa kembali pencarian Anda.</p>
+                </div>
+              ) : null}
+              
+              <div className="flex justify-end">
+                <Button variant="outline" onClick={() => setShowChildDevelopment(false)}>Tutup</Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {!showChildDevelopment && (
+        <>
+          {/* Search */}
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle className="text-foreground">Cari Jadwal</CardTitle>
+              <CardDescription>
+                Cari jadwal posyandu berdasarkan deskripsi atau lokasi
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center space-x-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Cari deskripsi atau lokasi..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Button variant="outline">
+                  Filter
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Schedule Table */}
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle className="text-foreground">Daftar Jadwal Posyandu</CardTitle>
+              <CardDescription>
+                Total {filteredSchedules.length} jadwal
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Tanggal</TableHead>
+                      <TableHead>Waktu</TableHead>
+                      <TableHead>Lokasi</TableHead>
+                      <TableHead>Deskripsi</TableHead>
+                      <TableHead>Kegiatan</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Aksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredSchedules.map((schedule) => (
+                      <TableRow key={schedule.id}>
+                        <TableCell className="font-medium">{formatDate(schedule.date)}</TableCell>
+                        <TableCell>{schedule.time}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center">
+                            <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                            {schedule.location}
+                          </div>
+                        </TableCell>
+                        <TableCell>{schedule.description}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {schedule.activities.map((activity, idx) => (
+                              <Badge key={idx} variant="outline" className="text-xs">
+                                {activity}
+                              </Badge>
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              schedule.status === 'Completed' ? 'default' : 'secondary'
+                            }
+                          >
+                            {schedule.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleEdit(schedule)}
+                            >
+                              Edit
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 };
